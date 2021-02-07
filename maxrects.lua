@@ -185,12 +185,61 @@ local function _FindPositionForNewNodeBAF(self, width, height, scores)
 	return bestNode
 end
 
-local function _FindPositionForNewNodeBL(self, width, height, scores)
-	-- TODO
+local function _CommonIntervalLength(i1start, i1end, i2start, i2end)
+	if i1end < i2start or i2end < i1start then return 0 end
+	return math.min(i1end, i2end) - math.max(i1start, i2start)
+end
+
+function _ContactPointScoreNode(self, x, y, width, height)
+	local score = 0
+
+	if x == 0 or (x + width == self.bWidth) then score = score + height end
+	if y == 0 or (y + height == self.bHeight) then score = score + width end
+
+	local rectToProcess = #self.usedRectangles
+	for i=1,rectToProcess,1 do
+		local rect = self.usedRectangles[i]
+		if (rect[1] == x + width) or (rect[1] + rect[3] == x) then
+			score = score + _CommonIntervalLength(rect[2], rect[2] + rect[4], y, y + height)
+		end
+		if (rect[2] == y + height) or (rect[2] + rect[4] == y) then
+			score = score + _CommonIntervalLength(rect[1], rect[1] + rect[3], x, x + width)
+		end
+	end
+	return score
 end
 
 local function _FindPositionForNewNodeCP(self, width, height, scores)
-	-- TODO
+	local bestNode = { 0, 0, 0, 0 }
+
+	scores[1] = -1 -- bestContactScore = -1
+
+	local rectToProcess = #self.freeRectangles
+	for i=1,rectToProcess,1 do
+		local frect = self.freeRectangles[i]
+		-- Try to place the rectangle in upright (non-flipped) orientation.
+		if frect[3] >= width and frect[4] >= height then
+			local score = _ContactPointScoreNode(self, frect[1], frect[2], width, height)
+			if score > scores[1] then
+				bestNode[1] = frect[1]
+				bestNode[2] = frect[2]
+				bestNode[3] = width
+				bestNode[4] = height
+				scores[1] = score
+			end
+		end
+		if self.bFlip and frect.width >= height and frect.height >= width then
+			local score = _ContactPointScoreNode(frect[1], frect[2], height, width)
+			if score > scores[1] then
+				bestNode[1] = frect[1]
+				bestNode[2] = frect[2]
+				bestNode[3] = height
+				bestNode[4] = width
+				scores[1] = score
+			end
+		end
+	end
+	return bestNode
 end
 
 -- table for our various heuristic functions
@@ -201,8 +250,6 @@ local FreeRectChoiceHeuristic = {
 			-- -BLSF: Positions the rectangle against the long side of a free rectangle into which it fits the best.
 		RectBestAreaFit = _FindPositionForNewNodeBAF,
 			-- -BAF: Positions the rectangle into the smallest free rect into which it fits.
-		RectBottomLeftRule = _FindPositionForNewNodeBL,
-			-- -BL: Does the Tetris placement.
 		RectContactPointRule =  _FindPositionForNewNodeCP }
 			-- -CP: Choosest the placement where the rectangle touches other rects as much as possible.
 
@@ -211,7 +258,6 @@ local FreeRectChoiceHeuristicName = {
 		[_FindPositionForNewNodeBSSF] = "BestShortSideFit",
 		[_FindPositionForNewNodeBLSF] = "BestLongSideFit",
 		[_FindPositionForNewNodeBAF] = "BestAreaFit",
-		[_FindPositionForNewNodeBL] = "BottomLeft",
 		[_FindPositionForNewNodeCP] = "ContactPointRule" }
 
 local function _CompareRectShortSide(ra,rb)
@@ -295,45 +341,6 @@ function MaxRects:setAlgorithm(algo)
 	if FreeRectChoiceHeuristic[algo] then
 		self.algorithm = FreeRectChoiceHeuristic[algo]
 	else error("MaxRects:setAlgorithm() got bad algo: " .. algo) end
-end
-
-function MaxRects:scoreRect(width, height, scores)
-	local newNode
-	scores[1] = math.huge
-	scores[2] = math.huge
-	newNode = self:algorithm(width, height, scores)
-
-	-- Cannot fit the current rectangle.
-	if (newNode[4] == 0) then
-		scores[1] = math.huge
-		scores[2] = math.huge
-	end
-
-	return newNode
-end
-
-local function _CommonIntervalLength(i1start, i1end, i2start, i2end)
-	if i1end < i2start or i2end < i1start then return 0 end
-	return math.min(i1end, i2end) - math.max(i1start, i2start)
-end
-
-function MaxRects:contactPointScoreNode(x, y, width, height)
-	local score = 0
-
-	if x == 0 or (x + width == binWidth) then score = score + height end
-	if y == 0 or (y + height == binHeight) then score = score + width end
-
-	local rectToProcess = #usedRectangles
-	for i=1,rectToProcess,1 do
-		local rect = usedRectangles[i]
-		if (rect[1] == x + width) or (rect[1] + rect[3] == x) then
-			score = score + _CommonIntervalLength(rect[2], rect[2] + rect[4], y, y + height)
-		end
-		if (usedRectangles[i].y == y + height) or (usedRectangles[i].y + usedRectangles[i].height == y) then
-			score = score + _CommonIntervalLength(rect[1], rect[1] + rect[3], x, x + width)
-		end
-	end
-	return score
 end
 
 function MaxRects:splitFreeNode(freeNode, usedNode)

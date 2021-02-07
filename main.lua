@@ -189,13 +189,46 @@ function RunFive:Draw()
 	DrawARun(self)
 end
 
-RunTable = { RunThree, RunFour, RunFive }
+RunSix = { name = "Put 63x31 and 10x10 tiles into " .. BinWidth .. "x" .. BinHeight .. " bin:", done = false,
+	mRects = MaxRects.new(BinWidth,BinHeight), cnt = 0, status = '', rate = 0.2, clck = 0,
+ 	ColorA = {0.4,0.8,0.4,1.0}, ColorB = {0.4,0.4,0.8,1.0} }
+
+function RunSix:Start()
+	self.mRects:setAlgorithm("RectContactPointRule")
+end
+
+function RunSix:Click()
+	self.cnt = self.cnt + 1
+	local sx, sy, data = 63, 31, self.ColorA
+	if math.fmod(self.cnt,2) == 1 then sx, sy, data = 10, 10, self.ColorB end
+	if not self.mRects:insert(sx,sy,data) then self.done = true end
+	self.status = tostring(self.cnt) .. ", " .. math.floor(self.mRects:occupancy() * 100) .. "% using " .. self.mRects:algorithmName()
+end
+
+function RunSix:Update(dt)
+	self.clck = self.clck + dt
+	if self.clck > self.rate then
+		self.clck = self.clck - self.rate
+		self:Click()
+	end
+	ULx = ScrWidth/2-(BinWidth/2)
+	ULy = ScrHeight/2-(BinHeight/2)
+end
+
+function RunSix:Draw()
+	DrawARun(self)
+end
+
+
+RunTable = { RunFour, RunFive, RunSix }
 cRun = 1
 TheRun = RunTable[cRun]
 
 --
 -- DO THE LOVE STUFF
 --
+
+paused = true
 
 function love.load()
 	ScrWidth, ScrHeight = love.graphics.getDimensions()
@@ -204,19 +237,23 @@ end
 
 function love.update(dt)
 	ScrWidth, ScrHeight = love.graphics.getDimensions()
-	if TheRun and TheRun.done then
-		if TheRun.Stop then TheRun:Stop() end
-		cRun = cRun + 1
-		TheRun = RunTable[cRun]
-		if TheRun == nil then
-			love.event.quit(0)
-		else
-			TheRun:Start()
+	if love.keyboard.isDown('space') then paused = false end
+	if not paused then
+		if TheRun and TheRun.done then
+			if TheRun.Stop then TheRun:Stop() end
+			cRun = cRun + 1
+			TheRun = RunTable[cRun]
+			if TheRun == nil then
+				love.event.quit(0)
+			else
+				TheRun:Start()
+			end
 		end
+		if TheRun then TheRun:Update(dt) end
 	end
-	if TheRun then TheRun:Update(dt) end
 end
 
 function love.draw()
+	if paused then return end
 	if TheRun then TheRun:Draw() end
 end
