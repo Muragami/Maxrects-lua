@@ -260,12 +260,6 @@ local FreeRectChoiceHeuristicName = {
 		[_FindPositionForNewNodeBAF] = "BestAreaFit",
 		[_FindPositionForNewNodeCP] = "ContactPointRule" }
 
-local function _CompareRectShortSide(ra,rb)
-end
-
-local function _NodeSortCmp(ra,rb)
-end
-
 local function _IsContainedIn(ra,rb)
 	return ra[1] >= rb[1] and ra[2] >= rb[2]
 				and ra[1]+ra[3] <= rb[1]+rb[3]
