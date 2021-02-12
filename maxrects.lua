@@ -381,8 +381,8 @@ function MaxRects:splitFreeNode(freeNode, usedNode)
 	return true
 end
 
+-- Go through each pair and remove any rectangle that is redundant.
 function MaxRects:pruneFreeList()
-	-- Go through each pair and remove any rectangle that is redundant.
 	local rectToProcess = #self.freeRectangles
 	for i=1,rectToProcess,1 do
 		local recta = self.freeRectangles[i]
@@ -404,6 +404,7 @@ function MaxRects:pruneFreeList()
 	self:compact()
 end
 
+-- remove all the empty entries, backwards to prevent having to shift them about if possible
 function MaxRects:compact()
 	local rectToProcess = #self.freeRectangles
 	for i=rectToProcess,1,-1 do
