@@ -81,6 +81,8 @@ RunTwo = { name = "Put 32x32 and 16x16 tiles into " .. BinWidth .. "x" .. BinHei
 	mRects = MaxRects.new(BinWidth,BinHeight), cnt = 0, status = '', rate = 0.2, clck = 0,
  	ColorA = {0.4,0.8,0.4,1.0}, ColorB = {0.4,0.4,0.8,1.0} }
 
+function RunTwo:Start() end
+
 function RunTwo:Click()
 	self.cnt = self.cnt + 1
 	local sx, sy, data = 16, 16, self.ColorA
@@ -106,6 +108,8 @@ end
 RunThree = { name = "Put 63x31 and 10x10 tiles into " .. BinWidth .. "x" .. BinHeight .. " bin:", done = false,
 	mRects = MaxRects.new(BinWidth,BinHeight), cnt = 0, status = '', rate = 0.2, clck = 0,
  	ColorA = {0.4,0.8,0.4,1.0}, ColorB = {0.4,0.4,0.8,1.0} }
+
+function RunThree:Start() end
 
 function RunThree:Click()
 	self.cnt = self.cnt + 1
@@ -220,7 +224,7 @@ function RunSix:Draw()
 end
 
 
-RunTable = { RunFour, RunFive, RunSix }
+RunTable = { RunOne, RunTwo, RunThree, RunFour, RunFive, RunSix }
 cRun = 1
 TheRun = RunTable[cRun]
 
