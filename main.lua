@@ -134,7 +134,7 @@ RunFour = { name = "Put 63x31 and 10x10 tiles into " .. BinWidth .. "x" .. BinHe
  	ColorA = {0.4,0.8,0.4,1.0}, ColorB = {0.4,0.4,0.8,1.0} }
 
 function RunFour:Start()
-	self.mRects:setAlgorithm("RectBestLongSideFit")
+	self.mRects:setAlgorithm("BestLongSideFit")
 end
 
 function RunFour:Click()
@@ -164,7 +164,7 @@ RunFive = { name = "Put 63x31 and 10x10 tiles into " .. BinWidth .. "x" .. BinHe
  	ColorA = {0.4,0.8,0.4,1.0}, ColorB = {0.4,0.4,0.8,1.0} }
 
 function RunFive:Start()
-	self.mRects:setAlgorithm("RectBestAreaFit")
+	self.mRects:setAlgorithm("BestAreaFit")
 end
 
 function RunFive:Click()
@@ -194,7 +194,7 @@ RunSix = { name = "Put 63x31 and 10x10 tiles into " .. BinWidth .. "x" .. BinHei
  	ColorA = {0.4,0.8,0.4,1.0}, ColorB = {0.4,0.4,0.8,1.0} }
 
 function RunSix:Start()
-	self.mRects:setAlgorithm("RectContactPointRule")
+	self.mRects:setAlgorithm("ContactPointRule")
 end
 
 function RunSix:Click()

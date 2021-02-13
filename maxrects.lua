@@ -47,14 +47,15 @@ local function _copyrect(rect)
 	ret[2] = rect[2]
 	ret[3] = rect[3]
 	ret[4] = rect[4]
+  ret.data = rect.data
+  ret.flipped = rect.flipped
 	return ret
 end
 
-local function _FindPositionForNewNodeBSSF(self, width, height, scores)
+local function _FindPositionForNewNodeBSSF(self, width, height)
 	local bestNode = { 0, 0, 0, 0 }
 
-	scores[1] = math.huge -- scores[1]
-	scores[2] = math.huge -- bestLongSideFit
+	local bestShortSideFit, bestLongSideFit = math.huge, math.huge
 
 	local rectToProcess = #self.freeRectangles
 	for i=1,rectToProcess,1 do
@@ -66,13 +67,13 @@ local function _FindPositionForNewNodeBSSF(self, width, height, scores)
 			local shortSideFit = math.min(leftoverHoriz, leftoverVert)
 			local longSideFit = math.max(leftoverHoriz, leftoverVert)
 
-			if shortSideFit < scores[1] or (shortSideFit == scores[1] and longSideFit < scores[2]) then
+			if shortSideFit < bestShortSideFit or (shortSideFit == bestShortSideFit and longSideFit < bestLongSideFit) then
 				bestNode[1] = rect[1]
 				bestNode[2] = rect[2]
 				bestNode[3] = width
 				bestNode[4] = height
-				scores[1] = shortSideFit
-				scores[2] = longSideFit
+				bestShortSideFit = shortSideFit
+				bestLongSideFit = longSideFit
 			end
 		end
 
@@ -82,24 +83,24 @@ local function _FindPositionForNewNodeBSSF(self, width, height, scores)
 			local flippedShortSideFit = math.min(flippedLeftoverHoriz, flippedLeftoverVert)
 			local flippedLongSideFit = math.max(flippedLeftoverHoriz, flippedLeftoverVert)
 
-			if flippedShortSideFit < scores[1] or (flippedShortSideFit == scores[1] and flippedLongSideFit < scores[2]) then
+			if flippedShortSideFit < bestShortSideFit or (flippedShortSideFit == bestShortSideFit and flippedLongSideFit < bestLongSideFit) then
 				bestNode[1] = rect[1]
 				bestNode[2] = rect[2]
 				bestNode[3] = width
 				bestNode[4] = height
-				scores[1] = flippedShortSideFit
-				scores[2] = flippedLongSideFit
+				bestShortSideFit = flippedShortSideFit
+				bestLongSideFit = flippedLongSideFit
+        bestNode.flipped = true
 			end
 		end
 	end
 	return bestNode
 end
 
-local function _FindPositionForNewNodeBLSF(self, width, height, scores)
+local function _FindPositionForNewNodeBLSF(self, width, height)
 	local bestNode = { 0, 0, 0, 0 }
 
-	scores[1] = math.huge -- bestShortSideFit
-	scores[2] = math.huge -- bestLongSideFit
+  local bestShortSideFit, bestLongSideFit = math.huge, math.huge
 
 	local rectToProcess = #self.freeRectangles
 	for i=1,rectToProcess,1 do
@@ -111,13 +112,13 @@ local function _FindPositionForNewNodeBLSF(self, width, height, scores)
 			local shortSideFit = math.min(leftoverHoriz, leftoverVert)
 			local longSideFit = math.max(leftoverHoriz, leftoverVert)
 
-			if longSideFit < scores[2] or (longSideFit == scores[2] and shortSideFit < scores[1]) then
+			if longSideFit < bestLongSideFit or (longSideFit == bestLongSideFit and shortSideFit < bestShortSideFit) then
 				bestNode[1] = frect[1]
 				bestNode[2] = frect[2]
 				bestNode[3] = width
 				bestNode[4] = height
-				scores[1] = shortSideFit
-				scores[2] = longSideFit
+				bestShortSideFit = shortSideFit
+				bestLongSideFit = longSideFit
 			end
 		end
 
@@ -127,24 +128,24 @@ local function _FindPositionForNewNodeBLSF(self, width, height, scores)
 			local shortSideFit = math.min(leftoverHoriz, leftoverVert)
 			local longSideFit = math.max(leftoverHoriz, leftoverVert)
 
-			if longSideFit < scores[2] or (longSideFit == scores[2] and shortSideFit < scores[1]) then
+			if longSideFit < bestLongSideFit or (longSideFit == bestLongSideFit and shortSideFit < bestShortSideFit) then
 				bestNode[1] = frect[1]
 				bestNode[2] = frect[2]
 				bestNode[3] = height
 				bestNode[4] = width
-				scores[1] = shortSideFit
-				scores[2] = longSideFit
+				bestShortSideFit = shortSideFit
+				bestLongSideFit = longSideFit
+        bestNode.flipped = true
 			end
 		end
 	end
 	return bestNode
 end
 
-local function _FindPositionForNewNodeBAF(self, width, height, scores)
+local function _FindPositionForNewNodeBAF(self, width, height)
 	local bestNode = { 0, 0, 0, 0 }
 
-	scores[1] = math.huge -- bestAreaFit
-	scores[2] = math.huge -- bestShortSideFit
+  local bestAreaFit, bestShortSideFit = math.huge, math.huge
 
 	local rectToProcess = #self.freeRectangles
 	for i=1,rectToProcess,1 do
@@ -157,13 +158,13 @@ local function _FindPositionForNewNodeBAF(self, width, height, scores)
 			local leftoverVert = math.abs(frect[4] - height)
 			local shortSideFit = math.min(leftoverHoriz, leftoverVert)
 
-			if areaFit < scores[1] or (areaFit == scores[1] and shortSideFit < scores[2]) then
+			if areaFit < bestAreaFit or (areaFit == bestAreaFit and shortSideFit < bestShortSideFit) then
 				bestNode[1] = frect[1]
 				bestNode[2] = frect[2]
 				bestNode[3] = width
 				bestNode[4] = height
-				scores[1] = areaFit
-				scores[2] = shortSideFit
+				bestAreaFit = areaFit
+				bestShortSideFit = shortSideFit
 			end
 		end
 
@@ -172,13 +173,14 @@ local function _FindPositionForNewNodeBAF(self, width, height, scores)
 			local leftoverVert = math.abs(frect[4] - width)
 			local shortSideFit = math.min(leftoverHoriz, leftoverVert)
 
-			if areaFit < scores[1] or (areaFit == scores[1] and shortSideFit < scores[2]) then
+			if areaFit < bestAreaFit or (areaFit == bestAreaFit and shortSideFit < bestShortSideFit) then
 				bestNode[1] = frect[1]
 				bestNode[2] = frect[2]
 				bestNode[3] = height
 				bestNode[4] = width
-				scores[1] = areaFit
-				scores[2] = shortSideFit
+				bestAreaFit = areaFit
+				bestShortSideFit = shortSideFit
+        bestNode.flipped = true
 			end
 		end
 	end
@@ -209,10 +211,11 @@ function _ContactPointScoreNode(self, x, y, width, height)
 	return score
 end
 
-local function _FindPositionForNewNodeCP(self, width, height, scores)
+local function _FindPositionForNewNodeCP(self, width, height)
 	local bestNode = { 0, 0, 0, 0 }
 
-	scores[1] = -1 -- bestContactScore = -1
+  local bestContactScore = -1
+	-- scores[1] = -1 -- bestContactScore = -1
 
 	local rectToProcess = #self.freeRectangles
 	for i=1,rectToProcess,1 do
@@ -244,13 +247,13 @@ end
 
 -- table for our various heuristic functions
 local FreeRectChoiceHeuristic = {
-		RectBestShortSideFit = _FindPositionForNewNodeBSSF,
+		BestShortSideFit = _FindPositionForNewNodeBSSF,
 			-- -BSSF: Positions the rectangle against the short side of a free rectangle into which it fits the best.
-		RectBestLongSideFit = _FindPositionForNewNodeBLSF,
+		BestLongSideFit = _FindPositionForNewNodeBLSF,
 			-- -BLSF: Positions the rectangle against the long side of a free rectangle into which it fits the best.
-		RectBestAreaFit = _FindPositionForNewNodeBAF,
+		BestAreaFit = _FindPositionForNewNodeBAF,
 			-- -BAF: Positions the rectangle into the smallest free rect into which it fits.
-		RectContactPointRule =  _FindPositionForNewNodeCP }
+		ContactPointRule =  _FindPositionForNewNodeCP }
 			-- -CP: Choosest the placement where the rectangle touches other rects as much as possible.
 
 -- table for names for the heuristics
@@ -272,9 +275,7 @@ MaxRects = { bWidth = 0, bWeight = 0, bFlip = false,
 
 function MaxRects:insert(width, height, data)
 	local newNode
-	self.scores[1] = math.huge
-	self.scores[2] = math.huge
-	newNode = self:algorithm(width, height, self.scores)
+	newNode = self:algorithm(width, height)
 	if newNode[4] == 0 then return false end
 	local rectToProcess = #self.freeRectangles
 	for i=1,rectToProcess,1 do
@@ -329,7 +330,7 @@ function MaxRects:init(width,height,canflip)
 	table.insert(self.freeRectangles, { 0, 0, width, height })
 end
 
-function MaxRects:reset() self:init() end
+function MaxRects:reset(width,height,canflip) self:init(width,height,canflip) end
 
 function MaxRects:setAlgorithm(algo)
 	if FreeRectChoiceHeuristic[algo] then
@@ -424,6 +425,10 @@ function MaxRects.new(width, height, canflip)
 	local ret = _clone(safeMaxRects)
 	ret:init(width,height,canflip)
 	return ret
+end
+
+function MaxRects.copy(rect)
+  return { rect[1], rect[2], rect[3], rect[4], data = rect.data, flipped = rect.flipped }
 end
 
 -- return the table in case a user expects that with = require 'maxrects'
