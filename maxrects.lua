@@ -215,7 +215,6 @@ local function _FindPositionForNewNodeCP(self, width, height)
 	local bestNode = { 0, 0, 0, 0 }
 
   local bestContactScore = -1
-	-- scores[1] = -1 -- bestContactScore = -1
 
 	local rectToProcess = #self.freeRectangles
 	for i=1,rectToProcess,1 do
@@ -223,22 +222,22 @@ local function _FindPositionForNewNodeCP(self, width, height)
 		-- Try to place the rectangle in upright (non-flipped) orientation.
 		if frect[3] >= width and frect[4] >= height then
 			local score = _ContactPointScoreNode(self, frect[1], frect[2], width, height)
-			if score > scores[1] then
+			if score > bestContactScore then
 				bestNode[1] = frect[1]
 				bestNode[2] = frect[2]
 				bestNode[3] = width
 				bestNode[4] = height
-				scores[1] = score
+				bestContactScore = score
 			end
 		end
 		if self.bFlip and frect.width >= height and frect.height >= width then
 			local score = _ContactPointScoreNode(frect[1], frect[2], height, width)
-			if score > scores[1] then
+			if score > bestContactScore then
 				bestNode[1] = frect[1]
 				bestNode[2] = frect[2]
 				bestNode[3] = height
 				bestNode[4] = width
-				scores[1] = score
+				bestContactScore = score
 			end
 		end
 	end
@@ -293,6 +292,26 @@ function MaxRects:insert(width, height, data)
 	return true
 end
 
+function MaxRects:insertRect(rect)
+  local newNode
+	newNode = self:algorithm(rect[3], rect[4])
+	if newNode[4] == 0 then return false end
+	local rectToProcess = #self.freeRectangles
+	for i=1,rectToProcess,1 do
+		if self.freeRectangles[i] ~= _INVALID then
+			if self:splitFreeNode(self.freeRectangles[i], newNode) then
+				-- remove this later!
+				self.freeRectangles[i] = _INVALID
+			end
+		end
+	end
+	self:pruneFreeList()
+	-- attach data if we have it
+  newNode.data = rect.data
+	table.insert(self.usedRectangles,newNode)
+	return true
+end
+
 function MaxRects:occupancy()
 	local usedSurfaceArea = 0
 	local count = #self.usedRectangles
@@ -336,6 +355,44 @@ function MaxRects:setAlgorithm(algo)
 	if FreeRectChoiceHeuristic[algo] then
 		self.algorithm = FreeRectChoiceHeuristic[algo]
 	else error("MaxRects:setAlgorithm() got bad algo: " .. algo) end
+end
+
+-- inverted so that we sort descending
+local function _IsRectAreaLarger(a,b)
+  return (a[3] * a[4]) > (b[3] * b[4])
+end
+
+-- inverted so that we sort descending
+local function _IsLongSideLonger(a,b)
+  return math.max(a[3],a[4]) > math.max(b[3],b[4])
+end
+
+-- inverted so that we sort descending
+local function _IsShortSideLonger(a,b)
+  return math.min(a[3],a[4]) > math.min(b[3],b[4])
+end
+
+function MaxRects:insertCollection(collect,sort)
+  local docoll = collect
+  local all = true
+  if sort == 'SortArea' then
+    table.sort(docoll,_IsRectAreaLarger)
+  elseif sort == 'SortLongSide' then
+    table.sort(docoll,_IsLongSideLonger)
+  elseif sort == 'SortShortSide' then
+    table.sort(docoll,_IsShortSideLonger)
+  else
+    if sort then error("MaxRects:insertCollection() bad sort method: " .. sort) end
+  end
+  local totalRects = #docoll
+  local added = 0
+  for i=1,totalRects,1 do
+    -- add the rect, or uh quit out
+    if self:insertRect(docoll[i]) then added = added + 1
+      else all = false break end
+  end
+  -- return if we added all, and the count of how many
+  return all, added
 end
 
 function MaxRects:splitFreeNode(freeNode, usedNode)
